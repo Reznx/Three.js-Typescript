@@ -1,3 +1,3 @@
 # Three.js-Typescript
 
-Run server `node ./dist/server/server.js`
+Run server `npm run dev`
