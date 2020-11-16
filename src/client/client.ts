@@ -1,122 +1,166 @@
-import * as THREE from '/build/three.module.js'
-import { OrbitControls } from '/jsm/controls/OrbitControls'
-import Stats from '/jsm/libs/stats.module'
-import { GUI } from '/jsm/libs/dat.gui.module'
+import * as THREE from "/build/three.module.js";
+import { OrbitControls } from "/jsm/controls/OrbitControls";
+import Stats from "/jsm/libs/stats.module";
+import { GUI } from "/jsm/libs/dat.gui.module";
 
-const scene: THREE.Scene = new THREE.Scene()
-const axesHelper = new THREE.AxesHelper(5)
-scene.add(axesHelper)
+const scene: THREE.Scene = new THREE.Scene();
 
-const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+const axesHelper = new THREE.AxesHelper(5);
+scene.add(axesHelper);
 
-const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer()
-renderer.setSize(window.innerWidth, window.innerHeight)
-document.body.appendChild(renderer.domElement)
+const light = new THREE.PointLight(0xffffff, 1);
+light.position.set(5, 5, 5);
+scene.add(light);
 
-const controls = new OrbitControls(camera, renderer.domElement)
-//controls.addEventListener('change', render)
+const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
 
-const boxGeometry: THREE.BoxGeometry = new THREE.BoxGeometry()
-const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry()
-const icosahedronGeometry: THREE.IcosahedronGeometry = new THREE.IcosahedronGeometry(1, 0)
-const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry()
-const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry()
+const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-const material: THREE.MeshBasicMaterial = new THREE.MeshBasicMaterial()//{ color: 0x00ff00, wireframe: true })
+const controls = new OrbitControls(camera, renderer.domElement);
 
-const texture = new THREE.TextureLoader().load("img/grid.png")
-material.map = texture
-const envTexture = new THREE.CubeTextureLoader().load(["img/px_50.png", "img/nx_50.png", "img/py_50.png", "img/ny_50.png", "img/pz_50.png", "img/nz_50.png"])
-envTexture.mapping = THREE.CubeReflectionMapping
-// envTexture.mapping = THREE.CubeRefractionMapping
-material.envMap = envTexture
+const boxGeometry: THREE.BoxGeometry = new THREE.BoxGeometry();
+const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry();
+const icosahedronGeometry: THREE.IcosahedronGeometry = new THREE.IcosahedronGeometry(
+  1,
+  0
+);
+const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry();
+const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry();
 
-const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material)
-cube.position.x = 5
-scene.add(cube)
+const threeTone = new THREE.TextureLoader().load("img/threeTone.jpg");
+threeTone.minFilter = THREE.NearestFilter;
+threeTone.magFilter = THREE.NearestFilter;
 
-const sphere: THREE.Mesh = new THREE.Mesh(sphereGeometry, material)
-sphere.position.x = 3
-scene.add(sphere)
+const fourTone = new THREE.TextureLoader().load("img/fourTone.jpg");
+fourTone.minFilter = THREE.NearestFilter;
+fourTone.magFilter = THREE.NearestFilter;
 
-const icosahedron: THREE.Mesh = new THREE.Mesh(icosahedronGeometry, material)
-icosahedron.position.x = 0
-scene.add(icosahedron)
+const fiveTone = new THREE.TextureLoader().load("img/fiveTone.jpg");
+fiveTone.minFilter = THREE.NearestFilter;
+fiveTone.magFilter = THREE.NearestFilter;
 
-const plane: THREE.Mesh = new THREE.Mesh(planeGeometry, material)
-plane.position.x = -2
-scene.add(plane)
+const material: THREE.MeshToonMaterial = new THREE.MeshToonMaterial();
 
-const torusKnot: THREE.Mesh = new THREE.Mesh(torusKnotGeometry, material)
-torusKnot.position.x = -5
-scene.add(torusKnot)
+const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material);
+cube.position.x = 5;
+scene.add(cube);
 
-camera.position.z = 3
+const sphere: THREE.Mesh = new THREE.Mesh(sphereGeometry, material);
+sphere.position.x = 3;
+scene.add(sphere);
 
-window.addEventListener('resize', onWindowResize, false)
+const icosahedron: THREE.Mesh = new THREE.Mesh(icosahedronGeometry, material);
+icosahedron.position.x = 0;
+scene.add(icosahedron);
+
+const plane: THREE.Mesh = new THREE.Mesh(planeGeometry, material);
+plane.position.x = -2;
+scene.add(plane);
+
+const torusKnot: THREE.Mesh = new THREE.Mesh(torusKnotGeometry, material);
+torusKnot.position.x = -5;
+scene.add(torusKnot);
+
+camera.position.z = 5;
+
+window.addEventListener("resize", onWindowResize, false);
 function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight
-    camera.updateProjectionMatrix()
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    render()
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  render();
 }
 
-const stats = Stats()
-document.body.appendChild(stats.dom)
+const stats = Stats();
+document.body.appendChild(stats.dom);
 
 var options = {
-    side: {
-        "FrontSide": THREE.FrontSide,
-        "BackSide": THREE.BackSide,
-        "DoubleSide": THREE.DoubleSide,
-    },
-    combine: {
-        "MultiplyOperation": THREE.MultiplyOperation,
-        "MixOperation": THREE.MixOperation,
-        "AddOperation": THREE.AddOperation
-    },
-}
-const gui = new GUI()
-
-const materialFolder = gui.addFolder('THREE.Material')
-materialFolder.add(material, 'transparent')
-materialFolder.add(material, 'opacity', 0, 1, 0.01)
-materialFolder.add(material, 'depthTest')
-materialFolder.add(material, 'depthWrite')
-materialFolder.add(material, 'alphaTest', 0, 1, 0.01).onChange(() => updateMaterial())
-materialFolder.add(material, 'visible')
-materialFolder.add(material, 'side', options.side).onChange(() => updateMaterial())
-materialFolder.open()
+  side: {
+    FrontSide: THREE.FrontSide,
+    BackSide: THREE.BackSide,
+    DoubleSide: THREE.DoubleSide,
+  },
+  gradientMap: {
+    Default: null,
+    threeTone: "threeTone",
+    fourTone: "fourTone",
+    fiveTone: "fiveTone",
+  },
+};
+const gui = new GUI();
 
 var data = {
-    color: material.color.getHex(),
+  lightColor: light.color.getHex(),
+  color: material.color.getHex(),
+  gradientMap: "fiveTone",
 };
+material.gradientMap = fiveTone;
 
-var meshBasicMaterialFolder = gui.addFolder('THREE.MeshBasicMaterial');
+const lightFolder = gui.addFolder("THREE.Light");
+lightFolder.addColor(data, "lightColor").onChange(() => {
+  light.color.setHex(Number(data.lightColor.toString().replace("#", "0x")));
+});
+lightFolder.add(light, "intensity", 0, 4);
 
-meshBasicMaterialFolder.addColor(data, 'color').onChange(() => { material.color.setHex(Number(data.color.toString().replace('#', '0x'))) });
-meshBasicMaterialFolder.add(material, 'wireframe');
-meshBasicMaterialFolder.add(material, 'wireframeLinewidth', 0, 10);
-meshBasicMaterialFolder.add(material, 'combine', options.combine).onChange(() => updateMaterial())
-meshBasicMaterialFolder.add(material, 'reflectivity', 0, 1);
-meshBasicMaterialFolder.add(material, 'refractionRatio', 0, 1);
-meshBasicMaterialFolder.open()
+const materialFolder = gui.addFolder("THREE.Material");
+materialFolder.add(material, "transparent");
+materialFolder.add(material, "opacity", 0, 1, 0.01);
+materialFolder.add(material, "depthTest");
+materialFolder.add(material, "depthWrite");
+materialFolder
+  .add(material, "alphaTest", 0, 1, 0.01)
+  .onChange(() => updateMaterial());
+materialFolder.add(material, "visible");
+materialFolder
+  .add(material, "side", options.side)
+  .onChange(() => updateMaterial());
+//materialFolder.open()
+
+var meshToonMaterialFolder = gui.addFolder("THREE.MeshToonMaterial");
+meshToonMaterialFolder.addColor(data, "color").onChange(() => {
+  material.color.setHex(Number(data.color.toString().replace("#", "0x")));
+});
+meshToonMaterialFolder
+  .add(material, "flatShading")
+  .onChange(() => updateMaterial());
+meshToonMaterialFolder
+  .add(data, "gradientMap", options.gradientMap)
+  .onChange(() => updateMaterial());
+meshToonMaterialFolder.open();
 
 function updateMaterial() {
-    material.side = Number(material.side)
-    material.combine = Number(material.combine)
-    material.needsUpdate = true
+  material.side = Number(material.side);
+  material.gradientMap = eval(data.gradientMap as any);
+  material.needsUpdate = true;
 }
 
 var animate = function () {
-    requestAnimationFrame(animate)
+  requestAnimationFrame(animate);
 
-    render()
+  icosahedron.rotation.y += 0.005;
+  icosahedron.rotation.x += 0.005;
+  cube.rotation.y += 0.005;
+  cube.rotation.x += 0.005;
+  torusKnot.rotation.y += 0.005;
+  torusKnot.rotation.x += 0.005;
+  sphere.rotation.y += 0.005;
+  sphere.rotation.x += 0.005;
+  plane.rotation.y += 0.005;
+  plane.rotation.x += 0.005;
 
-    stats.update()
+  render();
+
+  stats.update();
 };
 
 function render() {
-    renderer.render(scene, camera)
+  renderer.render(scene, camera);
 }
 animate();
