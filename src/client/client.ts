@@ -19,54 +19,44 @@ const camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(
   1000
 );
 
-const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer();
+const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer({
+  antialias: true,
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
-const boxGeometry: THREE.BoxGeometry = new THREE.BoxGeometry();
-const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry();
-const icosahedronGeometry: THREE.IcosahedronGeometry = new THREE.IcosahedronGeometry(
+const sphereGeometry: THREE.SphereGeometry = new THREE.SphereGeometry(
   1,
-  0
+  42,
+  42
 );
-const planeGeometry: THREE.PlaneGeometry = new THREE.PlaneGeometry();
-const torusKnotGeometry: THREE.TorusKnotGeometry = new THREE.TorusKnotGeometry();
+const circleGeometry: THREE.CylinderGeometry = new THREE.CylinderGeometry(
+  2,
+  2,
+  0.01,
+  32
+);
 
-const threeTone = new THREE.TextureLoader().load("img/threeTone.jpg");
-threeTone.minFilter = THREE.NearestFilter;
-threeTone.magFilter = THREE.NearestFilter;
+const material: THREE.MeshStandardMaterial = new THREE.MeshStandardMaterial();
+const lambertMaterial: THREE.MeshLambertMaterial = new THREE.MeshLambertMaterial();
 
-const fourTone = new THREE.TextureLoader().load("img/fourTone.jpg");
-fourTone.minFilter = THREE.NearestFilter;
-fourTone.magFilter = THREE.NearestFilter;
-
-const fiveTone = new THREE.TextureLoader().load("img/fiveTone.jpg");
-fiveTone.minFilter = THREE.NearestFilter;
-fiveTone.magFilter = THREE.NearestFilter;
-
-const material: THREE.MeshToonMaterial = new THREE.MeshToonMaterial();
-
-const cube: THREE.Mesh = new THREE.Mesh(boxGeometry, material);
-cube.position.x = 5;
-scene.add(cube);
+const loader: THREE.TextureLoader = new THREE.TextureLoader();
+const texture = loader.load("img/skybox.jpg", () => {
+  const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
+  rt.fromEquirectangularTexture(renderer, texture);
+  scene.background = rt;
+});
 
 const sphere: THREE.Mesh = new THREE.Mesh(sphereGeometry, material);
-sphere.position.x = 3;
+sphere.position.x = 0;
 scene.add(sphere);
 
-const icosahedron: THREE.Mesh = new THREE.Mesh(icosahedronGeometry, material);
-icosahedron.position.x = 0;
-scene.add(icosahedron);
-
-const plane: THREE.Mesh = new THREE.Mesh(planeGeometry, material);
-plane.position.x = -2;
-scene.add(plane);
-
-const torusKnot: THREE.Mesh = new THREE.Mesh(torusKnotGeometry, material);
-torusKnot.position.x = -5;
-scene.add(torusKnot);
+const circle: THREE.Mesh = new THREE.Mesh(circleGeometry, lambertMaterial);
+sphere.position.x = 0;
+circle.rotation.x = Math.PI / 180;
+scene.add(circle);
 
 camera.position.z = 5;
 
@@ -87,21 +77,14 @@ var options = {
     BackSide: THREE.BackSide,
     DoubleSide: THREE.DoubleSide,
   },
-  gradientMap: {
-    Default: null,
-    threeTone: "threeTone",
-    fourTone: "fourTone",
-    fiveTone: "fiveTone",
-  },
 };
 const gui = new GUI();
 
 var data = {
   lightColor: light.color.getHex(),
   color: material.color.getHex(),
-  gradientMap: "fiveTone",
+  emissive: material.emissive.getHex(),
 };
-material.gradientMap = fiveTone;
 
 const lightFolder = gui.addFolder("THREE.Light");
 lightFolder.addColor(data, "lightColor").onChange(() => {
@@ -109,51 +92,39 @@ lightFolder.addColor(data, "lightColor").onChange(() => {
 });
 lightFolder.add(light, "intensity", 0, 4);
 
-const materialFolder = gui.addFolder("THREE.Material");
-materialFolder.add(material, "transparent");
-materialFolder.add(material, "opacity", 0, 1, 0.01);
-materialFolder.add(material, "depthTest");
-materialFolder.add(material, "depthWrite");
-materialFolder
-  .add(material, "alphaTest", 0, 1, 0.01)
-  .onChange(() => updateMaterial());
-materialFolder.add(material, "visible");
-materialFolder
-  .add(material, "side", options.side)
-  .onChange(() => updateMaterial());
-//materialFolder.open()
-
-var meshToonMaterialFolder = gui.addFolder("THREE.MeshToonMaterial");
-meshToonMaterialFolder.addColor(data, "color").onChange(() => {
-  material.color.setHex(Number(data.color.toString().replace("#", "0x")));
+const materialFolder = gui.addFolder("THREE.lambertMaterial");
+materialFolder.addColor(data, "color").onChange(() => {
+  lambertMaterial.color.setHex(
+    Number(data.color.toString().replace("#", "0x"))
+  );
 });
-meshToonMaterialFolder
-  .add(material, "flatShading")
+materialFolder.addColor(data, "emissive").onChange(() => {
+  lambertMaterial.emissive.setHex(Number(data.emissive.toString().replace("#", "0x")));
+});
+materialFolder.add(lambertMaterial, "transparent");
+materialFolder.add(lambertMaterial, "opacity", 0, 1, 0.01);
+materialFolder.add(lambertMaterial, "depthTest");
+materialFolder.add(lambertMaterial, "depthWrite");
+materialFolder
+  .add(lambertMaterial, "alphaTest", 0, 1, 0.01)
   .onChange(() => updateMaterial());
-meshToonMaterialFolder
-  .add(data, "gradientMap", options.gradientMap)
+materialFolder.add(lambertMaterial, "visible");
+materialFolder.add(lambertMaterial, "reflectivity", 0, 1, 0.1);
+materialFolder.add(lambertMaterial, 'refractionRatio', 0, 1);
+materialFolder
+  .add(lambertMaterial, "side", options.side)
   .onChange(() => updateMaterial());
-meshToonMaterialFolder.open();
+materialFolder.open();
 
 function updateMaterial() {
-  material.side = Number(material.side);
-  material.gradientMap = eval(data.gradientMap as any);
-  material.needsUpdate = true;
+  lambertMaterial.side = Number(lambertMaterial.side);
+  lambertMaterial.combine = Number(lambertMaterial.combine);
+  lambertMaterial.needsUpdate = true;
 }
 
 var animate = function () {
   requestAnimationFrame(animate);
-
-  icosahedron.rotation.y += 0.005;
-  icosahedron.rotation.x += 0.005;
-  cube.rotation.y += 0.005;
-  cube.rotation.x += 0.005;
-  torusKnot.rotation.y += 0.005;
-  torusKnot.rotation.x += 0.005;
-  sphere.rotation.y += 0.005;
-  sphere.rotation.x += 0.005;
-  plane.rotation.y += 0.005;
-  plane.rotation.x += 0.005;
+  circle.rotation.y += 0.005;
 
   render();
 
