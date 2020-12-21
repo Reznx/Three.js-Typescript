@@ -15,24 +15,56 @@ const renderer = new THREE.WebGLRenderer({
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
-const sphereGeometry = new THREE.SphereGeometry(1, 42, 42);
-const circleGeometry = new THREE.CylinderGeometry(2, 2, 0.01, 32);
-const material = new THREE.MeshStandardMaterial();
-const lambertMaterial = new THREE.MeshLambertMaterial();
-const loader = new THREE.TextureLoader();
-const texture = loader.load("img/skybox.jpg", () => {
-    const rt = new THREE.WebGLCubeRenderTarget(texture.image.height);
-    rt.fromEquirectangularTexture(renderer, texture);
-    scene.background = rt;
+const uniforms = {
+    time: { type: "f", value: 0.0 },
+    resolution: { type: "v2", value: new THREE.Vector2() },
+    accretion_disk: { type: "b", value: false },
+    use_disk_texture: { type: "b", value: true },
+    lorentz_transform: { type: "b", value: false },
+    doppler_shift: { type: "b", value: false },
+    beaming: { type: "b", value: false },
+    cam_pos: { type: "v3", value: new THREE.Vector3() },
+    cam_vel: { type: "v3", value: new THREE.Vector3() },
+    cam_dir: { type: "v3", value: new THREE.Vector3() },
+    cam_up: { type: "v3", value: new THREE.Vector3() },
+    fov: { type: "f", value: 0.0 },
+    bg_texture: { type: "t", value: null },
+    star_texture: { type: "t", value: null },
+    disk_texture: { type: "t", value: null },
+};
+const loader = new THREE.FileLoader();
+const textureLoader = new THREE.TextureLoader();
+const textures = [];
+window.onbeforeunload = () => {
+    for (let i = 0; i < textures.length; i++)
+        textures[i].dispose();
+};
+const loadTexture = (name, image, interpolation, wrap = THREE.ClampToEdgeWrapping) => {
+    textures[name] = null;
+    textureLoader.load(image, (texture) => {
+        texture.magFilter = interpolation;
+        texture.minFilter = interpolation;
+        texture.wrapT = wrap;
+        texture.wrapS = wrap;
+        textures[name] = texture;
+    });
+};
+loadTexture("bg1", "https://cdn.glitch.com/631097e7-5a58-45aa-a51f-cc6b44f8b30b%2Fmilkyway.jpg?1545745139132", THREE.NearestFilter);
+loadTexture("star", "https://cdn.glitch.com/631097e7-5a58-45aa-a51f-cc6b44f8b30b%2Fstars.png?1545722529872", THREE.LinearFilter);
+loadTexture("disk", "https://cdn.glitch.com/631097e7-5a58-45aa-a51f-cc6b44f8b30b%2FdQ.png?1545846159297", THREE.LinearFilter);
+const material = new THREE.ShaderMaterial({
+    uniforms: uniforms,
+    vertexShader: document.getElementById("vertexShader").textContent,
 });
-const sphere = new THREE.Mesh(sphereGeometry, material);
-sphere.position.x = 0;
-scene.add(sphere);
-const circle = new THREE.Mesh(circleGeometry, lambertMaterial);
-sphere.position.x = 0;
-circle.rotation.x = Math.PI / 180;
-scene.add(circle);
-camera.position.z = 5;
+loader.load("0_main_tracer.glsl", (data) => {
+    let defines = `#define STEP 0.05
+#define NSTEPS 600
+`;
+    material.fragmentShader = defines + data;
+    material.needsUpdate = true;
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material);
+    scene.add(mesh);
+});
 window.addEventListener("resize", onWindowResize, false);
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -42,53 +74,9 @@ function onWindowResize() {
 }
 const stats = Stats();
 document.body.appendChild(stats.dom);
-var options = {
-    side: {
-        FrontSide: THREE.FrontSide,
-        BackSide: THREE.BackSide,
-        DoubleSide: THREE.DoubleSide,
-    },
-};
 const gui = new GUI();
-var data = {
-    lightColor: light.color.getHex(),
-    color: material.color.getHex(),
-    emissive: material.emissive.getHex(),
-};
-const lightFolder = gui.addFolder("THREE.Light");
-lightFolder.addColor(data, "lightColor").onChange(() => {
-    light.color.setHex(Number(data.lightColor.toString().replace("#", "0x")));
-});
-lightFolder.add(light, "intensity", 0, 4);
-const materialFolder = gui.addFolder("THREE.lambertMaterial");
-materialFolder.addColor(data, "color").onChange(() => {
-    lambertMaterial.color.setHex(Number(data.color.toString().replace("#", "0x")));
-});
-materialFolder.addColor(data, "emissive").onChange(() => {
-    lambertMaterial.emissive.setHex(Number(data.emissive.toString().replace("#", "0x")));
-});
-materialFolder.add(lambertMaterial, "transparent");
-materialFolder.add(lambertMaterial, "opacity", 0, 1, 0.01);
-materialFolder.add(lambertMaterial, "depthTest");
-materialFolder.add(lambertMaterial, "depthWrite");
-materialFolder
-    .add(lambertMaterial, "alphaTest", 0, 1, 0.01)
-    .onChange(() => updateMaterial());
-materialFolder.add(lambertMaterial, "visible");
-materialFolder.add(lambertMaterial, "reflectivity", 0, 1, 0.1);
-materialFolder.add(lambertMaterial, 'refractionRatio', 0, 1);
-materialFolder
-    .add(lambertMaterial, "side", options.side)
-    .onChange(() => updateMaterial());
-materialFolder.open();
-function updateMaterial() {
-    lambertMaterial.side = Number(lambertMaterial.side);
-    lambertMaterial.combine = Number(lambertMaterial.combine);
-    lambertMaterial.needsUpdate = true;
-}
 var animate = function () {
     requestAnimationFrame(animate);
-    circle.rotation.y += 0.005;
     render();
     stats.update();
 };
