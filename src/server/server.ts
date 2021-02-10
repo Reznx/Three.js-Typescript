@@ -45,6 +45,42 @@ class App {
         )
       )
     );
+    app.use(
+      "/jsm/postprocessing/EffectComposer",
+      express.static(
+        path.join(
+          __dirname,
+          "../../node_modules/three/examples/js/postprocessing/EffectComposer.js"
+        )
+      )
+    );
+    app.use(
+      "/jsm/postprocessing/ShaderPass",
+      express.static(
+        path.join(
+          __dirname,
+          "../../node_modules/three/examples/js/postprocessing/ShaderPass.js"
+        )
+      )
+    );
+    app.use(
+      "/jsm/postprocessing/RenderPass",
+      express.static(
+        path.join(
+          __dirname,
+          "../../node_modules/three/examples/js/postprocessing/RenderPass.js"
+        )
+      )
+    );
+    app.use(
+      "/jsm/postprocessing/UnrealBloomPass",
+      express.static(
+        path.join(
+          __dirname,
+          "../../node_modules/three/examples/js/postprocessing/UnrealBloomPass.js"
+        )
+      )
+    );
 
     this.server = new http.Server(app);
   }

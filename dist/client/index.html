@@ -1,28 +1,26 @@
 <!DOCTYPE html>
 <html>
-
-<head>
+  <head>
     <title>Three.js TypeScript WebGL Black Hole</title>
     <style>
-        body {
-            overflow: hidden;
-            margin: 0px;
-        }
-        canvas { 
-            width: 100%; 
-            height: 100%;
-        }
+      body {
+        overflow: hidden;
+        margin: 0px;
+      }
+      canvas {
+        width: 100%;
+        height: 100%;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <script type="module" src="client.js"></script>
-    <script type="x-shader/x-vertex" id="vertexShader">  
+    <script type="x-shader/x-vertex" id="vertexShader">
 
-        void main()	{
-          gl_Position = vec4( position, 1.0 );
-        }
-      </script>
-</body>
-
+      void main()	{
+        gl_Position = vec4( position, 1.0 );
+      }
+    </script>
+  </body>
 </html>

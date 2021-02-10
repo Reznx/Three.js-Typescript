@@ -1,5 +1,9 @@
 import * as THREE from "/build/three.module.js";
 import { OrbitControls } from "/jsm/controls/OrbitControls";
+import { EffectComposer } from "/jsm/postprocessing/EffectComposer";
+import { ShaderPass } from "/jsm/postprocessing/ShaderPass";
+import { RenderPass } from "/jsm/postprocessing/RenderPass";
+import { UnrealBloomPass } from "/jsm/postprocessing/UnrealBloomPass";
 import Stats from "/jsm/libs/stats.module";
 import { GUI } from "/jsm/libs/dat.gui.module";
 
@@ -24,6 +28,18 @@ const renderer: THREE.WebGLRenderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+// strength, kernelSize, sigma, res
+//
+// resolution, strength, radius, threshold
+const effectBloom = new UnrealBloomPass(128, 0.8, 2.0, 0.0);
+const effectCopy = new ShaderPass(THREE.CopyShader);
+effectCopy.renderToScreen = true;
+composer.addPass(renderPass);
+composer.addPass(effectBloom);
+composer.addPass(effectCopy);
 
 const controls = new OrbitControls(camera, renderer.domElement);
 
